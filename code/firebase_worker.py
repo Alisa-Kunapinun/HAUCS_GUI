@@ -81,7 +81,7 @@ class FirebaseWorker(QThread):
         if (lat is None or lat == "None"):
             lat = -1000
         message_time = sdata[key[10]]
-        ysi_do = sdata[key[11]]
+        ysi_do = np.array(sdata[key[11]]).tolist()
 
         data = {
             'do': avg_do_perc, 'init_do': init_DO, 'init_pressure': init_pressure,
