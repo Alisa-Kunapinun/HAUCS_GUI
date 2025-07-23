@@ -70,7 +70,7 @@ class FirebaseWorker(QThread):
         init_DO = sdata[key[1]]
         init_pressure = sdata[key[2]]
         pond_id = sdata[key[3]]
-        avg_do_perc = float(sdata[key[4]])
+        avg_do_perc = np.array(float(sdata[key[4]])).tolist()
         temp = np.array(sdata[key[5]]).tolist()
         pressure = np.array(sdata[key[6]]).tolist()
         battv = sdata[key[7]]
