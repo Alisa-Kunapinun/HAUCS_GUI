@@ -12,7 +12,7 @@ from datetime import datetime
 import subprocess
 import serial
 from subprocess import call
-from converter import convert_mgl_to_percent, convert_percent_to_mgl, celcius_to_farenheigh, farenheigh_to_celcius
+from converter import convert_mgl_to_percent, convert_percent_to_mgl, to_fahrenheit, to_celcius
 
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 
@@ -42,8 +42,8 @@ class BluetoothReader(QObject):
     data_size_at30sec = 30
     sample_stop_time = 30
 
-    msg_command = ["get init_do", 'get init_p', 'batt', 'sample reset', 'sample size', 'sample print', 'calibration pressure', 'calibration do']
-    do_vals_log = "/home/haucs/Desktop/HAUCS/truck_app/data/"
+    do_vals_log = "DO_data/"
+    msg_command = ["get init_do", 'get init_p', 'batt', 'sample reset', 'sample size', 'sample print', 'cal ps', 'cal do']
 
     ################## logger #########################
     logger_status = "normal"
@@ -256,7 +256,7 @@ class BluetoothReader(QObject):
                 self.writeCSV(self.csv_file, [float(value[0]), do_val, temp_val, pressure_val])
 
             self.do_vals.append(do_val) # DO
-            temp_val = celcius_to_farenheigh(temp_val)
+            temp_val = to_fahrenheit(temp_val)
             self.temp_vals.append(round(temp_val, 1))   # tempuerature 
             self.pressure_vals.append(pressure_val) # pressure
             self.data_counter = self.data_counter + 1  
@@ -316,7 +316,6 @@ class BluetoothReader(QObject):
         try:
             header = ['time', 'do', 'temperature', 'pressure']
             filePath = self.do_vals_log
-            #filePath = "data/"
             date = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
             if not os.path.exists(filePath):
@@ -341,7 +340,6 @@ class BluetoothReader(QObject):
     #     data_size_at30sec = self.data_size_at30sec
     #     sample_stop_time = self.sample_stop_time
 
-    #     # ✅ ปรับ scale ของ s_vals ตามกรณี
     #     if is_30sec:
     #         s_vals = np.linspace(0, 30, data_size_at30sec)
     #     else:
@@ -367,9 +365,8 @@ class BluetoothReader(QObject):
     #     return y_fit, x_plot, y_at_30, do_vals
 
     def calculate_do_and_fit(self, do_vals, max_time = 30):
-        s_vals = np.arange(len(do_vals))  # x จริงตามเวลาจริง (เช่น 0,1,...)
+        s_vals = np.arange(len(do_vals)) 
 
-        # สร้างแกน x_plot ที่ครอบคลุมถึง 30 วินาที (เสมอ)
         x_plot = np.linspace(0, 30, 100)
 
         # default fallback
@@ -377,13 +374,10 @@ class BluetoothReader(QObject):
         y_at_30 = None
 
         try:
-            # ✅ Fit exponential curve กับเท่าที่มีข้อมูล
             popt, _ = curve_fit(self.exp_func, s_vals, do_vals)
 
-            # ✅ สร้าง y_fit ให้มีค่าครอบคลุม x_plot ถึง 30s
             y_fit = self.exp_func(x_plot, *popt)
 
-            # ✅ คำนวณ y ที่ x=30 วินาที (แม้ข้อมูลจริงจะน้อยกว่านั้น)
             y_at_30 = self.exp_func(30, *popt)
 
         except Exception as e:
@@ -392,7 +386,6 @@ class BluetoothReader(QObject):
             # fallback: linear interpolation (ถ้ามีข้อมูลน้อย)
             y_fit = np.interp(x_plot, s_vals, do_vals)
 
-            # คำนวณ y_at_30 เฉพาะกรณีที่ข้อมูลถึง 30 วิ
             if 30 <= s_vals[-1]:
                 y_at_30 = np.interp(30, s_vals, do_vals)
             else:

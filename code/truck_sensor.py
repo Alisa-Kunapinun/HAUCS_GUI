@@ -10,12 +10,12 @@ import firebase_admin
 from firebase_admin import credentials,db
 import concurrent.futures
 from ysi_reader import YSIReader
-from converter import convert_mgl_to_percent, convert_percent_to_mgl, celcius_to_farenheigh, farenheigh_to_celcius
+from converter import convert_mgl_to_percent, convert_percent_to_mgl, to_fahrenheit, to_celcius
 
 from firebase_worker import FirebaseWorker
 
 class TruckSensor(QThread):
-    update_data = pyqtSignal(dict)  # ส่งข้อความหรือข้อมูลที่ต้องการ
+    update_data = pyqtSignal(dict) 
     status_data = pyqtSignal(str)
     logger_data = pyqtSignal(dict)
     counter_is_running = pyqtSignal(str)
@@ -53,13 +53,13 @@ class TruckSensor(QThread):
 
     max_fail = 30
     truck_id = "truck1"
-    fb_key="/home/haucs/Desktop/HAUCS_GUI/fb_key.json"
+    fb_key="fb_key.json"
     database_folder = "database_truck"
-    log_folder = "log"
-    do_vals_log = "/home/haucs/Desktop/HAUCS/truck_app/data/"
+    log_folder = "log/"
+    do_vals_log = "DO_data/"
     unsaved_json = "unsaved_json"
     completed_upload = "completed_json"
-    YSI_folder = "/home/haucs/Desktop/HAUCS_GUI/YSI_data/"
+    YSI_folder = "YSI_data/"
     unit = "mgl"
 
     def __init__(self, parent=None):
@@ -69,7 +69,10 @@ class TruckSensor(QThread):
     def initialize(self):
         date = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
-        logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', filename=f'{self.log_folder}/log_{date}.log', encoding='utf-8',
+        if not os.path.exists(self.log_folder):
+            os.makedirs(self.log_folder)
+
+        logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', filename=f"{self.log_folder}log_{date}.log", encoding='utf-8',
                     level=logging.INFO)
         self.logger = logging.getLogger(__name__)
         self.update_logger_text("info", 'DO Sensor Starting')
@@ -352,7 +355,7 @@ class TruckSensor(QThread):
 
             if update_pond_data:
                 time_stop = len(self.data_dict["do_vals"])
-                self.water_temp = farenheigh_to_celcius(self.data_dict["temp"][0])
+                self.water_temp = to_celcius(self.data_dict["temp"][0])
                 self.pressure = self.data_dict["pressure"][0]
                 self.do_val = self.data_dict["do"]
                 self.ysi_v = self.ysi_worker.get_record(time_stop)

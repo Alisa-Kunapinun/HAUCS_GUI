@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 import os, csv, re
 from datetime import datetime, timedelta
-from converter import convert_percent_to_mgl, farenheigh_to_celcius
+from converter import convert_percent_to_mgl, to_celcius
 
 class HistoryLogWindow(QDialog):
     unit = "percent"
@@ -75,6 +75,9 @@ class HistoryLogWindow(QDialog):
 
         pattern = re.compile(r".+_(\d{4}-\d{2}-\d{2})\.csv$")
 
+        if not os.path.exists(foldername):
+            os.makedirs(foldername)
+
         for fname in os.listdir(foldername):
             match = pattern.match(fname)
             if match:
@@ -92,7 +95,6 @@ class HistoryLogWindow(QDialog):
 
     def load_data(self, foldername):
         rows = []
-        temp_dict = {}  # จำ temp/press ของแต่ละแถวไว้ใช้ตอนสร้างสี
 
         for fpath in self.get_target_files(foldername):
             basename = os.path.basename(fpath)
@@ -106,7 +108,7 @@ class HistoryLogWindow(QDialog):
                         hboi = row["HBOI DO"]
                         ysi = row["YSI DO"]
                         temp_f = float(row["Temperature"])
-                        temp = farenheigh_to_celcius(temp_f)
+                        temp = to_celcius(temp_f)
                         press = float(row["Pressure"])
 
                         if self.is_number(hboi):

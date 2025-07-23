@@ -1,0 +1,13 @@
+pandas
+numpy
+ADS1x15-ADC
+scipy
+firebase-admin
+adafruit-circuitpython-ble
+pyserial
+adafruit-circuitpython-gps
+shapely
+gpiozero
+pigpio
+matplotlib
+pytz
